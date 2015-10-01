@@ -51,24 +51,24 @@ PAGE_NUMBER = 2
 LIMIT = 2
 GET /api/v1/books?page=2&limit=2
 
-{
-	“books”: 
-	[
-		{
-		“title” : “451”,
-		“author” : “Ray”,
-		“rating” : “5”
-		“img_url” : “/api/v1/books/123/icon.jpg”
-		“book_url” : “/api/v1/books/123/123.fb2”
-		} ,
-		{
-		“title” : “Ann”,
-		“author” : “Leo”,
-		“rating” : “5”
-		“img_url” : “/api/v1/books/124/icon.jpg”
-		“book_url” : “/api/v1/books/124/124.fb2”
-		}
-	]
-}
+    {
+        “books”: 
+        [
+            {
+            “title” : “451”,
+            “author” : “Ray”,
+            “rating” : “5”
+            “img_url” : “/api/v1/books/123/icon.jpg”
+            “book_url” : “/api/v1/books/123/123.fb2”
+            } ,
+            {
+            “title” : “Ann”,
+            “author” : “Leo”,
+            “rating” : “5”
+            “img_url” : “/api/v1/books/124/icon.jpg”
+            “book_url” : “/api/v1/books/124/124.fb2”
+            }
+        ]
+    }
 
 
