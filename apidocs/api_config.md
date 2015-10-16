@@ -20,17 +20,50 @@
         “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
     }
 
+img_url - обложка книги, загружается пользователем при создании книги; ее может не быть.
+book_url  - ссылка на скачивание книги, ее может не быть, загружается пользователем при создании книги.
 
 ### PUT /api/v1/books/BOOK_ID 
 
-1) где BOOK_ID - сгенерированный хеш клиентом для книги  <br/>
-2) где BOOK_ID - уже известная книга, тогда обновляем рейтинг <br/>
+где BOOK_ID - уже известная книга, тогда обновляем рейтинг, если поменялся не только рейтинг, то все остальное игнорируем <br/>
 
 #### Коды возврата:
 200 - Success <br/>
 400 - Error <br/>
 403 - Such book exists <br/>
 404 - Invalid url <br/>
+
+
+### POST /api/v1/books 
+
+#### Пример входных данных:
+
+	{
+		“title” : “451”,
+        “author” : “Ray”,
+        “img_url” : “/api/v1/books/123/icon.jpg”,
+        “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
+	}
+
+
+где BOOK_ID - сгенерированный хеш  для книги  <br/>
+
+#### Пример выходных данных:
+
+	{
+		“title” : “451”,
+        “author” : “Ray”,
+        “rating” : “5”,
+        “img_url” : “/api/v1/books/123/icon.jpg”,
+        “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
+	}
+		
+#### Коды возврата:
+200 - Success <br/>
+400 - Error <br/>
+403 - Such book exists <br/>
+404 - Invalid url <br/>
+
 
 
 ### GET/api/v1/books?page=PAGE_NUMBER&limit=LIMIT&rating=RATING
