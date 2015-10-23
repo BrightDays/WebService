@@ -27,7 +27,7 @@ book_url  - ссылка на скачивание книги, ее может �
 
 где BOOK_ID - уже известная книга, тогда обновляем рейтинг, если запрос корректен(rating = [0, 10]), иначе HTTP-error: 403
 
-#### Пример выходных данных:
+#### Пример входных данных:
 
     {
         “rating” : “5”
@@ -72,7 +72,7 @@ book_url  - ссылка на скачивание книги, ее может �
 
 
 
-### GET/api/v1/books?page=PAGE_NUMBER&limit=LIMIT&rating=RATING
+#### GET/api/v1/books?page=PAGE_NUMBER&limit=LIMIT&rating=RATING
 #### GET /api/v1/books?page=PAGE_NUMBER&limit=LIMIT
 #### GET /api/v1/books?bookname=BOOK_NAME&author=AUTHOR_NAME
 #### GET /api/v1/books?author=AUTHOR_NAME
