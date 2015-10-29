@@ -1,0 +1,1 @@
+g++ RequestHandler.cpp -fPIC -lfastcgi-daemon2 -shared -o requesthandler.so

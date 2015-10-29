@@ -24,7 +24,9 @@ public:
         virtual void onUnload() {
         }
         virtual void handleRequest(fastcgi::Request *req, fastcgi::HandlerContext *context) {
-
+		fastcgi::RequestStream stream(req);
+		//req->setHeader("Simple-Header", "Reply from csimple");
+		stream << "Hello, world!";
         }
 
 };
