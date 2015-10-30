@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/user/WebService/bookService/Book.h
+string
+-
+stdio.h
+-
+
+/home/user/WebService/bookService/DatabaseManager.h
+sqlite3.h
+/home/user/WebService/bookService/sqlite3.h
+Book.h
+/home/user/WebService/bookService/Book.h
+vector
+-
+SQLiteCpp/SQLiteCpp.h
+/home/user/WebService/bookService/SQLiteCpp/SQLiteCpp.h
+
+/home/user/WebService/bookService/sqlite3.h
+stdarg.h
+-
+
+/home/user/WebService/bookService/test.cpp
+DatabaseManager.h
+/home/user/WebService/bookService/DatabaseManager.h
+vector
+-
+Book.h
+/home/user/WebService/bookService/Book.h
+iostream
+-
+
