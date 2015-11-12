@@ -1,8 +1,11 @@
-#include "Book.h"
+//#include "Book.h"
 #include <vector>
 #include <cstdlib>
 #include <iostream>
-#include "mongo/client/dbclient.h" // for the driver
+#include <string>
+#include <string.h>
+#include <memory>
+#include "mongo/client/dbclient.h"
 
 using namespace std;
 
@@ -10,14 +13,16 @@ using namespace std;
 class DatabaseManager 
 {
 private: 
-	string databaseName = "test_books";
-	string booksTableName = "book";
+	string databaseName;
+	string booksTableName;
 	mongo::DBClientConnection connection;
 
-	void run();
+
 public:
-	DatabaseManager();
-	vector<Book> getAllBooks();
-	void addBook(Book book);
-	void updateRating(Book book);
+    DatabaseManager();
+	vector<string> getAllBooks();
+    void run();
+
+//	void addBook(Book book);
+//	void updateRating(Book book);
 };

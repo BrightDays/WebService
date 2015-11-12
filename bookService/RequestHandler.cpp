@@ -3,11 +3,11 @@
 #include <fastcgi2/handler.h>
 #include <fastcgi2/request.h>
 #include "fastcgi2/stream.h"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include "DatabaseManager.h"
 #include <iostream>
 #include <stdio.h>
+#include <vector>
+#include <string>
 
 class RequestHandler : virtual public fastcgi::Component, virtual public fastcgi::Handler {
 
@@ -23,10 +23,16 @@ public:
         }
         virtual void onUnload() {
         }
-        virtual void handleRequest(fastcgi::Request *req, fastcgi::HandlerContext *context) {
-		fastcgi::RequestStream stream(req);
-		//req->setHeader("Simple-Header", "Reply from csimple");
-		stream << "Hello, world!";
+        virtual void handleRequest(fastcgi::Request *req, fastcgi::HandlerContext *context)
+        {
+            fastcgi::RequestStream stream(req);
+            DatabaseManager manager;
+            manager.run();
+            vector<string> books = manager.getAllBooks();
+            string s = "";
+            for(int i = 0; i < books.size(); i++)
+                s += books[i];
+            stream << s;
         }
 
 };
