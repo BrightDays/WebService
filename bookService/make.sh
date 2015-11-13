@@ -1,1 +1,1 @@
-g++ RequestHandler.cpp DatabaseManager.cpp -I/usr/local/include/libmongoc-1.0 -I/usr/local/include/libbson-1.0 -lmongoc-1.0 -lbson-1.0 -fPIC -lfastcgi-daemon2 -shared -o requesthandler.so
+g++ RequestHandler.cpp DatabaseManager.cpp -fPIC -lfastcgi-daemon2  -I $HOME/mongo-client-install/include -L $HOME/mongo-client-install/lib -pthread -lmongoclient -lboost_thread-mt -lboost_system -lboost_regex -lrt  -o requesthandler.so
