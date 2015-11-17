@@ -8,6 +8,9 @@
 #include "mongo/client/dbclient.h"
 
 using namespace std;
+using mongo::BSONElement;
+using mongo::BSONObj;
+using mongo::BSONObjBuilder;
 
 
 class DatabaseManager 
@@ -19,9 +22,9 @@ private:
 
 
 public:
-    DatabaseManager();
+    	DatabaseManager();
 	vector<string> getAllBooks();
-    void run();
+    	void run();
 
 //	void addBook(Book book);
 //	void updateRating(Book book);
