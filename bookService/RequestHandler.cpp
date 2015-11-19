@@ -29,10 +29,15 @@ public:
             DatabaseManager manager;
             manager.run();
             vector<string> books = manager.getAllBooks();
-            string s = "abbb ";
             for(int i = 0; i < books.size(); i++)
                 s += books[i];
-            stream << s;
+            stream << "ALL BOOKS: " << s << " \n";
+            
+            if (req->hasArg("book_id"))
+            {
+                string bookId = req->getArg("book_id");
+                stream << "BOOK : " << manager.getBookById(bookId) << " \n";
+            }
         }
 
 };
