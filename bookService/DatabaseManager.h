@@ -1,31 +1,25 @@
-//#include "Book.h"
+#include "Book.h"
 #include <vector>
 #include <cstdlib>
 #include <iostream>
-#include <string>
-#include <string.h>
-#include <memory>
-#include "mongo/client/dbclient.h"
+#include "mongo/client/dbclient.h" // for the driver
 
 using namespace std;
-using mongo::BSONElement;
-using mongo::BSONObj;
-using mongo::BSONObjBuilder;
 
 
 class DatabaseManager 
 {
 private: 
-	string databaseName;
-	string booksTableName;
+	string databaseName = "test_books";
+	string booksTableName = "book";
 	mongo::DBClientConnection connection;
 
-
+	void run();
 public:
-    	DatabaseManager();
-	vector<string> getAllBooks();
-    	void run();
+	DatabaseManager();
+	vector<Book> getAllBooks();
+	void addBook (Book book);
+	void updateRating (Book book);
+	string getBookById (string id);
 
-//	void addBook(Book book);
-//	void updateRating(Book book);
 };
