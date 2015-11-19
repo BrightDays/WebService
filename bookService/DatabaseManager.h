@@ -10,16 +10,15 @@ using namespace std;
 class DatabaseManager 
 {
 private: 
-	string databaseName = "test_books";
-	string booksTableName = "book";
+	string databaseName;
+	string booksTableName;
 	mongo::DBClientConnection connection;
-
-	void run();
 public:
+    void run();
 	DatabaseManager();
-	vector<Book> getAllBooks();
-	void addBook (Book book);
-	void updateRating (Book book);
-	string getBookById (string id);
-
+    string getDatabaseName();
+	vector<string> getAllBooks();
+//	void addBook (Book);
+//	void updateRating (Book);
+	string getBookById (const string&);
 };

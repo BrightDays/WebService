@@ -13,7 +13,7 @@ private:
 	string bookUrl;
 	double rating;
 public: 
-	Book(string _title, string _author, string _imageUrl, string _bookUrl, double _rating):title(_title), author(_author), 
+	Book(string _title, string _author, string _imageUrl, string _bookUrl):title(_title), author(_author),
 		imageUrl(_imageUrl), bookUrl(_bookUrl), rating(0){}
 	Book(string _title, string _author, string _imageUrl, string _bookUrl, double _rating):title(_title), author(_author), 
 		imageUrl(_imageUrl), bookUrl(_bookUrl), rating(_rating){}

@@ -29,6 +29,7 @@ public:
             DatabaseManager manager;
             manager.run();
             vector<string> books = manager.getAllBooks();
+            string s;
             for(int i = 0; i < books.size(); i++)
                 s += books[i];
             stream << "ALL BOOKS: " << s << " \n";
