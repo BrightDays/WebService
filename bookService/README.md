@@ -60,13 +60,13 @@
 404 - Invalid url <br/>
 
 #### Пример возвращаемых данных:
-{
-“title” : “451”,
-“author” : “Ray”,
-“rating” : “5”,
-“img_url” : “/api/v1/books/123/icon.jpg”,
-“book_url” : “/api/v1/books/BOOK_ID/123.fb2”
-}
+    {
+        “title” : “451”,
+        “author” : “Ray”,
+        “rating” : “5”,
+        “img_url” : “/api/v1/books/123/icon.jpg”,
+        “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
+    }
 
 img_url - обложка книги, загружается пользователем при создании книги; ее может не быть.
 book_url  - ссылка на скачивание книги, ее может не быть, загружается пользователем при создании книги.
