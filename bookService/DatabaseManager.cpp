@@ -19,7 +19,7 @@ void DatabaseManager::run()
 vector<string> DatabaseManager::getAllBooks()
 {
 	vector<string>books;
-    	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(databaseName + "." + booksTableName, mongo :: BSONObj()));
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(databaseName + "." + booksTableName, mongo :: BSONObj()));
 	while (cursor->more())
 	{
 	   books.push_back(cursor->next().jsonString());
@@ -30,19 +30,31 @@ vector<string> DatabaseManager::getAllBooks()
 	return books;
 }
 
+string DatabaseManager::getBookById (string id) 
+{
+	string book;
+	auto_ptr<DBClientCursor> cursor = c.query("tutorial.persons", MONGO_QUERY("_id" << id));
+    while (cursor->more()) 
+	{
+        BSONObj p = cursor->next();
+        book = p.getStringField("name").jsonString();
+    }
+	return book;
+}
 
-//void DatabaseManager::addBook(Book book) 
-//{
-//	BSONObj bookBSON = BSON( GENOID << "title" << book.getTitle() << "author" << book.getAuthor() << "imageUrl" 
-//	<< book.getImageUrl << "bookUrl" << book.getBookUrl() << "rating" << book.getRating() );
-//	connection.insert(booksTableName, bookBSON);
-//}
-//
-//void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
-//{
-//	db.update(booksTableName,
-//		BSON("title" << book.getTitle() << "author" << book.getAuthor() << "imageUrl" 
-//			<< book.getImageUrl << "bookUrl" << book.getBookUrl() << "rating" << book.getRating()),
-//		BSON("$inc" << BSON( "rating" << rating)));
-//		
-//}
+
+void DatabaseManager::addBook(Book book) 
+{
+	BSONObj bookBSON = BSON( GENOID << "title" << book.getTitle() << "author" << book.getAuthor() << "imageUrl" 
+	<< book.getImageUrl << "bookUrl" << book.getBookUrl() << "rating" << book.getRating() );
+	connection.insert(booksTableName, bookBSON);
+}
+
+void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
+{
+	db.update(booksTableName,
+		BSON("title" << book.getTitle() << "author" << book.getAuthor() << "imageUrl" 
+			<< book.getImageUrl << "bookUrl" << book.getBookUrl() << "rating" << book.getRating()),
+		BSON("$inc" << BSON( "rating" << rating)));
+		
+}
