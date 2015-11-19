@@ -34,9 +34,9 @@ public:
                 s += books[i];
             stream << "ALL BOOKS: " << s << " \n";
             
-            if (req->hasArg("book_id"))
+            if (req->hasArg("bookid"))
             {
-                string bookId = req->getArg("book_id");
+                string bookId = req->getArg("bookid");
                 stream << "BOOK : " << manager.getBookById(bookId) << " \n";
             }
         }
