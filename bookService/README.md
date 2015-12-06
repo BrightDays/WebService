@@ -46,6 +46,7 @@
 200 - Success <br/>
 400 - Error <br/>
 Response json:
+
     {
         "error" : message
     }
