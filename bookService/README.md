@@ -45,6 +45,11 @@
 #### Коды возврата:
 200 - Success <br/>
 400 - Error <br/>
+Response json:
+    {
+        "error" : message
+    }
+
 404 - Invalid url <br/>
 
 
