@@ -83,14 +83,15 @@ vector<string> DatabaseManager::getBooksByName(const string& bookName)
 	}
 	return books;
 }
-//
-//void DatabaseManager::addBook(Book book) 
-//{
-//	BSONObj bookBSON = BSON( GENOID << "title" << book.getTitle() << "author" << book.getAuthor() << "imageUrl" 
-//	<< book.getImageUrl << "bookUrl" << book.getBookUrl() << "rating" << book.getRating() );
-//	connection.insert(booksTableName, bookBSON);
-//}
-//
+
+void DatabaseManager::addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl) 
+{
+	BSONObj bookBSON = BSON( GENOID << "title" << title << "author" << author << "imageUrl" 
+	<< imageUrl << "bookUrl" << bookUrl() << "rating" << 0 );
+	connection.insert(booksTableName, bookBSON);
+}
+
+
 //void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
 //{
 //	db.update(booksTableName,
