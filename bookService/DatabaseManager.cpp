@@ -47,6 +47,42 @@ string DatabaseManager::getBookById (const string& bookId)
 	return book;
 }
 
+
+string DatabaseManager::getBookByNameAndAuthor (const string& title, const string& author)
+{
+	string book;
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(), MONGO_QUERY("title" << title << "author" << author)));
+    if (cursor->more()) 
+	{
+        mongo :: BSONObj p = cursor->next();
+        book = p.jsonString();
+    }
+	return book;
+}
+
+vector<string> DatabaseManager::getBooksByAuthor(const string& author)
+{
+	vector<string>books;
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(),  
+				MONGO_QUERY("author" << author)));
+	while (cursor->more())
+	{
+	   books.push_back(cursor->next().jsonString());
+	}
+	return books;
+}
+
+vector<string> DatabaseManager::getBooksByName(const string& bookName)
+{
+	vector<string>books;
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(),  
+				MONGO_QUERY("title" << bookName)));
+	while (cursor->more())
+	{
+	   books.push_back(cursor->next().jsonString());
+	}
+	return books;
+}
 //
 //void DatabaseManager::addBook(Book book) 
 //{

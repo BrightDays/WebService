@@ -34,11 +34,32 @@ public:
                 s += books[i];
             stream << "ALL BOOKS: " << s << " \n";
             
-            if (req->hasArg("bookid"))
+            if (req->hasArg("bookid") && req->countArgs() == 1)
             {
                 string bookId = req->getArg("bookid");
                 stream << "BOOK : " << manager.getBookById(bookId) << " \n";
             }
+			else if (req->hasArg("author")&& req->countArgs() == 1)
+			{
+				vector<string> books = manager.getBooksByAuthor(req->getArg("author"));
+				string booksJSON;
+				for(int i = 0; i < books.size(); i++)
+					booksJSON += books[i];
+				stream << "Books by author: " << booksJSON;
+			}
+			else if (req->hasArg("bookname")&& req->countArgs() == 1)
+			{
+				vector<string> books = manager.getBooksByName(req->getArg("bookname"));
+				string booksJSON;
+				for(int i = 0; i < books.size(); i++)
+					booksJSON += books[i];
+				stream << "Books by name: " << booksJSON;
+			}
+			else if(req->countArgs() == 2 && req->hasArg("bookname")&& req->hasArg("author"))
+			{
+				string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
+				stream << "Books by name and author: " << booksJSON; 
+			}
         }
 
 };

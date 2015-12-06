@@ -1,3 +1,4 @@
+#pragma once
 #include "Book.h"
 #include <vector>
 #include <cstdlib>
@@ -21,4 +22,7 @@ public:
 //	void addBook (Book);
 //	void updateRating (Book);
 	string getBookById (const string&);
+	vector<string> getBooksByAuthor(const string&);
+	vector<string> getBooksByName(const string&);
+	string getBookByNameAndAuthor (const string&, const string&);
 };
