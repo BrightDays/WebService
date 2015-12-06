@@ -44,7 +44,7 @@
 		
 #### Коды возврата:
 200 - Success <br/>
-400 - Error. Such book exists <br/>
+400 - Error <br/>
 404 - Invalid url <br/>
 
 

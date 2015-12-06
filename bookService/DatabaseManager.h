@@ -19,7 +19,8 @@ public:
 	DatabaseManager();
     string getDatabaseName();
 	vector<string> getAllBooks();
-//	void addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl);
+	bool addBook(const string&, const string&, const string&, const string&, string &);
+//    void addBook(const mongo :: BSONObj &bookBSON);
 //	void updateRating (Book);
 	string getBookById (const string&);
 	vector<string> getBooksByAuthor(const string&);

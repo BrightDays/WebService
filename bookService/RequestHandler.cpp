@@ -37,7 +37,12 @@ public:
             if (requestMethod == "POST")
             {
                 handlePostRequest(req, context, manager);
+            } else
+            if (requestMethod == "GET")
+            {
+                handleGetRequest(req, context, manager);
             }
+            
         }
     
         void handlePostRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
@@ -46,7 +51,6 @@ public:
             fastcgi :: DataBuffer buffer = req->requestBody();
             string jsonString;
             buffer.toString(jsonString);
-            stream << jsonString << "\n";
             
             mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
             mongo :: BSONElement title = bookBSON.getField("title");
@@ -57,19 +61,46 @@ public:
             {
                 if (title.valuestrsize() > 1 && author.valuestrsize() > 1)
                 {
-                    manager.addBook(title.str(), author.str(), imageUrl.str(), bookUrl.str());
+                    string response;
+                    bool success = manager.addBook(title.str(), author.str(), imageUrl.str(), bookUrl.str(), response);
+                    if (success)
+                    {
+                        stream << response;
+                        return;
+                    }
+                    sendError(req, stream, response, 400);
+                } else
+                {
+                    sendError(req, stream, 400);
                 }
+            } else
+            {
+                string message = "Incorrect title or author name.";
+                sendError(req, stream, message, 400);
             }
+        }
+    
+        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, string &message, int status)
+        {
+            stream << "{ \"error\" : \"" + message + "\" }";
+            req->setStatus(status);
+        }
+    
+        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, int status)
+        {
+            string message = "Incorrect request body";
+            sendError(req, stream, message, status);
         }
     
         void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
-            //            vector<string> books = manager.getAllBooks();
-            //            string s;
-            //            for(int i = 0; i < books.size(); i++)
-            //                s += books[i];
-            //            stream << "ALL BOOKS: " << s << " \n";
+//            vector<string> books = manager.getAllBooks();
+//            string s;
+//            for(int i = 0; i < books.size(); i++)
+//                s += books[i];
+//            stream << "ALL BOOKS: " << s << " \n";
+//            return;
             
             if (req->hasArg("bookid") && req->countArgs() == 1)
             {
