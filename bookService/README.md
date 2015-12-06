@@ -13,8 +13,8 @@
 
 #### Коды возврата:
 200 - Success <br/>
-400 - Error <br/>
-403 - Invalid parameters <br/>
+400 - Error. Invalid parameters <br/>
+403 - Forbidden. Need authentication <br/>
 404 - Invalid url <br/>
 
 
@@ -44,8 +44,7 @@
 		
 #### Коды возврата:
 200 - Success <br/>
-400 - Error <br/>
-403 - Such book exists <br/>
+400 - Error. Such book exists <br/>
 404 - Invalid url <br/>
 
 
