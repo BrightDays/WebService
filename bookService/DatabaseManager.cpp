@@ -9,6 +9,8 @@ DatabaseManager::DatabaseManager()
 	mongo::client::initialize();
     databaseName = "test_books";
     booksTableName = "book";
+	userTableName = "user";
+	bookUserTableName = "book_user";	
 }
 
 void DatabaseManager::run() 
@@ -16,15 +18,16 @@ void DatabaseManager::run()
 	connection.connect("localhost");//TODO: change loclahost to ip
 }
 
-string DatabaseManager :: getDatabaseName()
+string DatabaseManager :: getDatabaseName(const string& tableName)
 {
-    return databaseName + "." + booksTableName;
+    return databaseName + "." + tableName;
 }
+
 
 vector<string> DatabaseManager::getAllBooks()
 {
 	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(), mongo :: BSONObj()));
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName), mongo :: BSONObj()));
 	while (cursor->more())
 	{
 	   books.push_back(cursor->next().jsonString());
@@ -38,7 +41,7 @@ vector<string> DatabaseManager::getAllBooks()
 string DatabaseManager::getBookById (const string& bookId)
 {
 	string book;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
     while (cursor->more()) 
 	{
         mongo :: BSONObj p = cursor->next();
@@ -51,7 +54,7 @@ string DatabaseManager::getBookById (const string& bookId)
 string DatabaseManager::getBookByNameAndAuthor (const string& title, const string& author)
 {
 	string book;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(), MONGO_QUERY("title" << title << "author" << author)));
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("title" << title << "author" << author)));
     if (cursor->more()) 
 	{
         mongo :: BSONObj p = cursor->next();
@@ -63,7 +66,7 @@ string DatabaseManager::getBookByNameAndAuthor (const string& title, const strin
 vector<string> DatabaseManager::getBooksByAuthor(const string& author)
 {
 	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(),  
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
 				MONGO_QUERY("author" << author)));
 	while (cursor->more())
 	{
@@ -75,7 +78,7 @@ vector<string> DatabaseManager::getBooksByAuthor(const string& author)
 vector<string> DatabaseManager::getBooksByName(const string& bookName)
 {
 	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(),  
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
 				MONGO_QUERY("title" << bookName)));
 	while (cursor->more())
 	{
@@ -91,7 +94,7 @@ bool DatabaseManager :: addBook(const string& title, const string& author, const
     
     try
     {
-        connection.insert(getDatabaseName(), bookBSON);
+        connection.insert(getDatabaseName(booksTableName), bookBSON);
     }
     catch(exception &e)
     {
@@ -100,6 +103,12 @@ bool DatabaseManager :: addBook(const string& title, const string& author, const
     }
     response = bookBSON.jsonString();
     return true;
+}
+
+bool DatabaseManager :: updateRating(const string& bookId, int rating)
+{
+	mongo :: db.update(getDatabaseName(bookUserTableName),
+	mongo :: BSON("_id" << mongo :: OID(bookId), BSON("$inc" << BSON( "rating" << rating)));
 }
 
 
