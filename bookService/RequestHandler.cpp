@@ -13,6 +13,9 @@
 #include "mongo/client/dbclient.h"
 
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost/api/v1/books
+//curl -H "Content-Type: application/json" -X POST -d '{"title" : "1984", "author" : "Orwell", "image_url" : "", "book_url" : "", "rating" : "0" }' http://localhost/api/v1/books
+//curl -H "Content-Type: application/json" -X PUT --data '{"rating" : "10"}' http://localhost/api/v1/books?bookid=5668975e10a1fafab87227e5
+
 
 class RequestHandler : virtual public fastcgi::Component, virtual public fastcgi::Handler {
 
@@ -37,12 +40,55 @@ public:
             if (requestMethod == "POST")
             {
                 handlePostRequest(req, context, manager);
-            } else
+            }
             if (requestMethod == "GET")
             {
                 handleGetRequest(req, context, manager);
             }
+            if (requestMethod == "PUT")
+            {
+                handlePutRequest(req, context, manager);
+            }
             
+        }
+    
+        void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
+        {
+            fastcgi::RequestStream stream(req);
+            if (req->hasArg("bookid") && req->countArgs() == 2)
+            {
+                fastcgi :: DataBuffer buffer = req->requestBody();
+                string jsonString;
+                buffer.toString(jsonString);
+                mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
+                mongo :: BSONElement rating = bookBSON.getField("rating");
+                string bookId = req->getArg("bookid");
+                int ratingNumber = 0;
+                try
+                {
+                    if (rating.isNumber())
+                        ratingNumber = rating.Int();
+                    else
+                        ratingNumber = atoi(rating.String().c_str());
+                }
+                catch(std :: exception e)
+                {
+                    sendError(req, stream, 400);
+                    return;
+                }
+                if (ratingNumber >= 0 && ratingNumber <= 10)
+                {
+                    manager.updateRating(bookId, ratingNumber);
+                } else
+                {
+                    sendError(req, stream, 400);
+                    return;
+                }
+            } else
+            {
+                sendError(req, stream, 400);
+                return;
+            }
         }
     
         void handlePostRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)

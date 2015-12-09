@@ -50,6 +50,17 @@ string DatabaseManager::getBookById (const string& bookId)
 	return book;
 }
 
+mongo :: BSONObj DatabaseManager::getBookBsonById (const string& bookId)
+{
+    mongo :: BSONObj p;
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
+    while (cursor->more())
+    {
+        p = cursor->next();
+    }
+    return p;
+}
+
 
 string DatabaseManager::getBookByNameAndAuthor (const string& title, const string& author)
 {
@@ -90,7 +101,7 @@ vector<string> DatabaseManager::getBooksByName(const string& bookName)
 bool DatabaseManager :: addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl, string &response)
 {
 
-    mongo :: BSONObj bookBSON = BSON(mongo :: GENOID << "title" << title << "author" << author << "image_url" << imageUrl << "book_url" << bookUrl << "rating" << "0" );
+    mongo :: BSONObj bookBSON = BSON(mongo :: GENOID << "title" << title << "author" << author << "image_url" << imageUrl << "book_url" << bookUrl << "rating" << 0 );
     
     try
     {
@@ -105,10 +116,10 @@ bool DatabaseManager :: addBook(const string& title, const string& author, const
     return true;
 }
 
-bool DatabaseManager :: updateRating(const string& bookId, int rating)
+
+void DatabaseManager :: updateRating(const string& bookId, int rating)
 {
-	mongo :: db.update(getDatabaseName(bookUserTableName),
-	mongo :: BSON("_id" << mongo :: OID(bookId), BSON("$inc" << BSON( "rating" << rating)));
+    connection.update(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId)), BSON("$set" << BSON( "rating" << rating)));
 }
 
 

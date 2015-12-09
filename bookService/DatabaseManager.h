@@ -25,8 +25,9 @@ public:
 //    void addBook(const mongo :: BSONObj &bookBSON);
 //	void updateRating (Book);
 	string getBookById (const string&);
+    mongo :: BSONObj getBookBsonById (const string& bookId);
 	vector<string> getBooksByAuthor(const string&);
 	vector<string> getBooksByName(const string&);
 	string getBookByNameAndAuthor (const string&, const string&);
-	bool updateRating(const string& bookId, int rating);
+	void updateRating(const string& bookId, int rating);
 };
