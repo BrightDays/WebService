@@ -19,7 +19,7 @@ public:
 	DatabaseManager();
     string getDatabaseName();
 	vector<string> getAllBooks();
-//	void addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl);
+	void addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl);
 //	void updateRating (Book);
 	string getBookById (const string&);
 	vector<string> getBooksByAuthor(const string&);

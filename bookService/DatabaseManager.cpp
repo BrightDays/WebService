@@ -84,10 +84,10 @@ vector<string> DatabaseManager::getBooksByName(const string& bookName)
 	return books;
 }
 
-void DatabaseManager::addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl) 
+void DatabaseManager::addBook(BSONOb) 
 {
 	BSONObj bookBSON = BSON( GENOID << "title" << title << "author" << author << "imageUrl" 
-	<< imageUrl << "bookUrl" << bookUrl() << "rating" << 0 );
+	<< imageUrl << "bookUrl" << bookUrl << "rating" << 0 );
 	connection.insert(booksTableName, bookBSON);
 }
 
