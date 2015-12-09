@@ -84,11 +84,22 @@ vector<string> DatabaseManager::getBooksByName(const string& bookName)
 	return books;
 }
 
-void DatabaseManager::addBook(BSONOb) 
+bool DatabaseManager :: addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl, string &response)
 {
-	BSONObj bookBSON = BSON( GENOID << "title" << title << "author" << author << "imageUrl" 
-	<< imageUrl << "bookUrl" << bookUrl << "rating" << 0 );
-	connection.insert(booksTableName, bookBSON);
+
+    mongo :: BSONObj bookBSON = BSON(mongo :: GENOID << "title" << title << "author" << author << "image_url" << imageUrl << "book_url" << bookUrl << "rating" << "0" );
+    
+    try
+    {
+        connection.insert(getDatabaseName(), bookBSON);
+    }
+    catch(exception &e)
+    {
+        response = "Incorrect request body.";
+        return false;
+    }
+    response = bookBSON.jsonString();
+    return true;
 }
 
 
