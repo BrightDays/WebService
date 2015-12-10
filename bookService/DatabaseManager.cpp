@@ -117,11 +117,50 @@ bool DatabaseManager :: addBook(const string& title, const string& author, const
 }
 
 
-void DatabaseManager :: updateRating(const string& bookId, int rating)
+void DatabaseManager :: updateRating(const string& bookId, int rating, const string& userId)
 {
-    connection.update(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId)), BSON("$set" << BSON( "rating" << rating)));
+	//int votesCount = connection.count(bookUserTableName, MONGO_QUERY("_id" << mongo :: OID(bookId)).where("rating > 0"));
+	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
+				MONGO_QUERY("bookId" << bookId << "userId" << "userId")));
+	//int previousUserRating = 0;
+	if (cursor->more()) // if he voted
+	{
+		connection.update(getDatabaseName(bookUserTableName), MONGO_QUERY("bookId" << bookId << "userId" << userId), BSON("$set" << BSON( "rating" << rating)));
+	}
+	else
+	{
+		//add rating, he never voted
+		//add to Book_User
+		connection.insert(getDatabaseName(bookUserTableName), BSON("bookId" << bookId << "userId" << userId << "rating" << rating));
+		recountRating(bookId);
+	}    
 }
 
+void DatabaseManager :: recountRating(const string& bookId)
+{
+	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
+				MONGO_QUERY("bookId" << bookId)));
+	int votesCount = 0;
+	long commonRating = 0;
+	int ratingNumber = 0;
+	while(cursor->more())
+	{
+		mongo :: BSONObj p = cursor->next();
+        	mongo :: BSONElement rating = p.getField("rating");
+		if (rating.isNumber())
+			ratingNumber = rating.Int();
+		else
+			ratingNumber = atoi(rating.String().c_str());
+		commonRating += ratingNumber;
+		votesCount++;
+	}
+	if (votesCount > 0)
+	{
+		double resultRating = commonRating / votesCount;
+		connection.update(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId)), 
+													BSON("$set" << BSON( "rating" << resultRating)));
+	}
+}
 
 //void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
 //{

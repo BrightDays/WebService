@@ -55,7 +55,7 @@ public:
         void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
-            if (req->hasArg("bookid") && req->countArgs() == 2)
+            if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
             {
                 fastcgi :: DataBuffer buffer = req->requestBody();
                 string jsonString;
@@ -63,6 +63,7 @@ public:
                 mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
                 mongo :: BSONElement rating = bookBSON.getField("rating");
                 string bookId = req->getArg("bookid");
+				string userId = req->getArg("userid");
                 int ratingNumber = 0;
                 try
                 {
@@ -78,7 +79,7 @@ public:
                 }
                 if (ratingNumber >= 0 && ratingNumber <= 10)
                 {
-                    manager.updateRating(bookId, ratingNumber);
+                    manager.updateRating(bookId, ratingNumber, userId);//TODO: user id required
                 } else
                 {
                     sendError(req, stream, 400);
