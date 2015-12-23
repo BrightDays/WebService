@@ -14,7 +14,7 @@
 
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost/api/v1/books
 //curl -H "Content-Type: application/json" -X POST -d '{"title" : "1984", "author" : "Orwell", "image_url" : "", "book_url" : "", "rating" : "0" }' http://localhost/api/v1/books
-//curl -H "Content-Type: application/json" -X PUT --data '{"rating" : "10"}' http://localhost/api/v1/books?bookid=5668975e10a1fafab87227e5
+//curl -H "Content-Type: application/json" -X PUT --data '{"rating" : "10"}' http://localhost/api/v1/books?bookid=566aea019f4f815613e5de8a
 
 
 class RequestHandler : virtual public fastcgi::Component, virtual public fastcgi::Handler {
@@ -55,6 +55,13 @@ public:
         void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
+
+			std::vector<std::string> names;
+			req->argNames(names);
+			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
+				stream << *it << " ";
+			stream << req->countArgs();
+
             if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
             {
                 fastcgi :: DataBuffer buffer = req->requestBody();
@@ -74,6 +81,7 @@ public:
                 }
                 catch(std :: exception e)
                 {
+					stream << "1\n";
                     sendError(req, stream, 400);
                     return;
                 }
@@ -82,19 +90,28 @@ public:
                     manager.updateRating(bookId, ratingNumber, userId);//TODO: user id required
                 } else
                 {
+					stream << "2\n";
                     sendError(req, stream, 400);
                     return;
                 }
             } else
             {
+				stream << "3\n";
                 sendError(req, stream, 400);
                 return;
             }
         }
     
         void handlePostRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
-        {
-            fastcgi::RequestStream stream(req);
+        {        
+			fastcgi::RequestStream stream(req);
+			
+			std::vector<std::string> names;
+			req->argNames(names);
+			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
+				stream << *it << " ";
+			stream << req->countArgs();
+			return;
             fastcgi :: DataBuffer buffer = req->requestBody();
             string jsonString;
             buffer.toString(jsonString);
@@ -142,12 +159,14 @@ public:
         void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
-//            vector<string> books = manager.getAllBooks();
-//            string s;
-//            for(int i = 0; i < books.size(); i++)
-//                s += books[i];
-//            stream << "ALL BOOKS: " << s << " \n";
-//            return;
+			if (req->countArgs() == 0)
+			{
+				vector<string> books = manager.getAllBooks();
+				string s;
+				for(int i = 0; i < books.size(); i++)
+					s += books[i];
+				stream << "ALL BOOKS: " << s << " \n";
+			}
             
             if (req->hasArg("bookid") && req->countArgs() == 1)
             {
