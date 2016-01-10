@@ -164,7 +164,7 @@ public:
             }
         }
     
-        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, string &message, int status)
+        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, std :: string &message, int status)
         {
             stream << "{ \"error\" : \"" + message + "\" }";
             req->setStatus(status);
