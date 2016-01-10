@@ -38,13 +38,13 @@ public:
         {
             DatabaseManager manager;
             manager.run();
-            string scriptName = req->getScriptName();
+            std :: string scriptName = req->getScriptName();
             // len("/api/v1/") = 8
             int startPosition = 8;
-            string collection = scriptName.substr(startPosition);
+            std :: string collection = scriptName.substr(startPosition);
             if (collection == "books")
             {
-                string requestMethod = req->getRequestMethod();
+                std :: string requestMethod = req->getRequestMethod();
                 if (requestMethod == "POST")
                 {
                     handlePostRequest(req, context, manager);
@@ -60,7 +60,7 @@ public:
             }
             if (collection == "users")
             {
-                string requestMethod = req->getRequestMethod();
+                std :: string requestMethod = req->getRequestMethod();
                 if (requestMethod == "POST")
                 {
                     handlePostRequestToUsers(req, context, manager);
@@ -83,12 +83,19 @@ public:
             if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
             {
                 fastcgi :: DataBuffer buffer = req->requestBody();
-                string jsonString;
+                std :: string jsonString;
                 buffer.toString(jsonString);
                 mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
                 mongo :: BSONElement rating = bookBSON.getField("rating");
-                string bookId = req->getArg("bookid");
-				string userId = req->getArg("userid");
+                std :: string bookId = req->getArg("bookid");
+				std :: string userId = req->getArg("userid");
+                bool userIdExists = manager.userIdExists(userId);
+                if (!userIdExists)
+                {
+                    std :: string message = "Incorrect user";
+                    sendError(req, stream, message, 401);
+                    return;
+                }
                 int ratingNumber = 0;
                 try
                 {
@@ -126,7 +133,7 @@ public:
 			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
 				stream << *it << " ";
             fastcgi :: DataBuffer buffer = req->requestBody();
-            string jsonString;
+            std :: string jsonString;
             buffer.toString(jsonString);
             
             mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
@@ -138,7 +145,7 @@ public:
             {
                 if (title.valuestrsize() > 1 && author.valuestrsize() > 1)
                 {
-                    string response;
+                    std :: string response;
                     bool success = manager.addBook(title.str(), author.str(), imageUrl.str(), bookUrl.str(), response);
                     if (success)
                     {
@@ -152,7 +159,7 @@ public:
                 }
             } else
             {
-                string message = "Incorrect title or author name.";
+                std :: string message = "Incorrect title or author name.";
                 sendError(req, stream, message, 400);
             }
         }
@@ -165,7 +172,7 @@ public:
     
         void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, int status)
         {
-            string message = "Incorrect request body";
+            std :: string message = "Incorrect request body";
             sendError(req, stream, message, status);
         }
     
@@ -174,8 +181,8 @@ public:
             fastcgi::RequestStream stream(req);
 			if (req->countArgs() == 0)
 			{
-				vector<string> books = manager.getAllBooks();
-				string s;
+				std :: vector<std :: string> books = manager.getAllBooks();
+				std :: string s;
 				for(int i = 0; i < books.size(); i++)
 					s += books[i];
 				stream << "ALL BOOKS: " << s << " \n";
@@ -183,28 +190,28 @@ public:
             
             if (req->hasArg("bookid") && req->countArgs() == 1)
             {
-                string bookId = req->getArg("bookid");
+                std :: string bookId = req->getArg("bookid");
                 stream << "BOOK : " << manager.getBookById(bookId) << " \n";
             }
             else if (req->hasArg("author")&& req->countArgs() == 1)
             {
-                vector<string> books = manager.getBooksByAuthor(req->getArg("author"));
-                string booksJSON;
+                std :: vector<std :: string> books = manager.getBooksByAuthor(req->getArg("author"));
+                std :: string booksJSON;
                 for(int i = 0; i < books.size(); i++)
                     booksJSON += books[i];
                 stream << "Books by author: " << booksJSON;
             }
             else if (req->hasArg("bookname")&& req->countArgs() == 1)
             {
-                vector<string> books = manager.getBooksByName(req->getArg("bookname"));
-                string booksJSON;
+                std :: vector<std :: string> books = manager.getBooksByName(req->getArg("bookname"));
+                std :: string booksJSON;
                 for(int i = 0; i < books.size(); i++)
                     booksJSON += books[i];
                 stream << "Books by name: " << booksJSON;
             }
             else if(req->countArgs() == 2 && req->hasArg("bookname")&& req->hasArg("author"))
             {
-                string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
+                std :: string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
                 stream << "Books by name and author: " << booksJSON; 
             }
         }
@@ -216,7 +223,7 @@ public:
         fastcgi::RequestStream stream(req);
         
         fastcgi :: DataBuffer buffer = req->requestBody();
-        string jsonString;
+        std :: string jsonString;
         buffer.toString(jsonString);
         
         mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
@@ -228,18 +235,18 @@ public:
             {
                 if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg("signup") == "0"))
                 {
-                    string response;
+                    std :: string response;
                     bool success = manager.checkUser(login.str(), password.str(), response);
                     if (success)
                     {
                         stream << response;
                         return;
                     }
-                    string message = "Incorrect login or password";
+                    std :: string message = "Incorrect login or password";
                     sendError(req, stream, message, 401);
                 } else
                 {
-                    string response;
+                    std :: string response;
                     bool loginExists = manager.checkLoginExists(login.str());
                     if (!loginExists)
                     {
@@ -252,7 +259,7 @@ public:
                         sendError(req, stream, response, 400);
                     } else
                     {
-                        string message = "Such login exists";
+                        std :: string message = "Such login exists";
                         sendError(req, stream, message, 401);
                     }
                 }
@@ -262,7 +269,7 @@ public:
             }
         } else
         {
-            string message = "Incorrect login or password.";
+            std :: string message = "Incorrect login or password.";
             sendError(req, stream, message, 401);
         }
     }
