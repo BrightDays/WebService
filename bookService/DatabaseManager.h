@@ -25,10 +25,12 @@ public:
 //    void addBook(const mongo :: BSONObj &bookBSON);
 //	void updateRating (Book);
 	string getBookById (const string&);
-    	mongo :: BSONObj getBookBsonById (const string& bookId);
+    mongo :: BSONObj getBookBsonById (const string& bookId);
 	vector<string> getBooksByAuthor(const string&);
 	vector<string> getBooksByName(const string&);
 	string getBookByNameAndAuthor (const string&, const string&);
 	void updateRating(const string& bookId, int rating, const string& userId);
-
+	bool addUser(const string& login, const string& password, string &response);
+	bool checkUser (const string& login, const string& password, string &response);
+	bool checkLoginExists(const string& login);
 };

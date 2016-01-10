@@ -162,6 +162,48 @@ void DatabaseManager :: recountRating(const string& bookId)
 	}
 }
 
+bool DatabaseManager :: addUser(const string& login, const string& password, string &response)
+{
+    mongo :: BSONObj userBSON = BSON(mongo :: GENOID << "login" << login << "password" << password);
+    
+    try
+    {
+        connection.insert(getDatabaseName(userTableName), userBSON);
+    }
+    catch(exception &e)
+    {
+        response = "Incorrect request body.";
+        return false;
+    }
+    response = userBSON.jsonString();
+    return true;
+}
+
+
+bool DatabaseManager :: checkUser (const string& login, const string& password, string &response) // response = user id 
+{
+    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), MONGO_QUERY("login" << login << "password" << password)));
+    if (cursor->more()) 
+	{
+		mongo :: BSONObj user = cursor->next();
+		mongo :: BSONElement userId = user.getField("_id");
+		response = "{ \"userid\" : \"" + userId.String() + "\"}"; 
+        return true;
+    }
+	return false;
+}
+
+bool DatabaseManager :: checkLoginExists(const string& login) 
+{
+	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), MONGO_QUERY("login" << login)));
+    if (cursor->more()) 
+	{
+        return true;
+    }
+	return false;
+}
+
+
 //void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
 //{
 //	db.update(booksTableName,
