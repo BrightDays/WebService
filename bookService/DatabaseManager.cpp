@@ -1,214 +1,277 @@
+#include <fastcgi2/component.h>
+#include <fastcgi2/component_factory.h>
+#include <fastcgi2/handler.h>
+#include <fastcgi2/request.h>
+#include "fastcgi2/stream.h"
+#include <fastcgi2/data_buffer.h>
+
 #include "DatabaseManager.h"
-#include <memory>
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <string>
+#include "mongo/client/dbclient.h"
 
-using namespace std;
-
-
-DatabaseManager::DatabaseManager()
-{
-	mongo::client::initialize();
-    databaseName = "test_books";
-    booksTableName = "book";
-	userTableName = "user";
-	bookUserTableName = "book_user";	
-}
-
-void DatabaseManager::run() 
-{
-	connection.connect("localhost");//TODO: change loclahost to ip
-}
-
-string DatabaseManager :: getDatabaseName(const string& tableName)
-{
-    return databaseName + "." + tableName;
-}
+//curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost/api/v1/books
+//curl -H "Content-Type: application/json" -X POST -d '{"title" : "1984", "author" : "Orwell", "image_url" : "", "book_url" : "", "rating" : "0" }' http://localhost/api/v1/books
+//curl -H "Content-Type: application/json" -X PUT --data '{"rating" : "10"}' http://localhost/api/v1/books?bookid=566aea019f4f815613e5de8a
+//curl -H "Content-Type: application/json" -X POST -d '{"login":"admin","password":"admin"}' http://localhost/api/v1/users
 
 
-vector<string> DatabaseManager::getAllBooks()
-{
-	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName), mongo :: BSONObj()));
-	while (cursor->more())
-	{
-	   books.push_back(cursor->next().jsonString());
-	}
-	//if (books.size())
-	//	return books;
-	//books.push_back(mongo::DBClientWithCommands::getLastError(0,0,0,0));
-	return books;
-}
+class RequestHandler : virtual public fastcgi::Component, virtual public fastcgi::Handler {
 
-string DatabaseManager::getBookById (const string& bookId)
-{
-	string book;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
-    while (cursor->more()) 
-	{
-        mongo :: BSONObj p = cursor->next();
-        book = p.jsonString();
-    }
-	return book;
-}
+public:
+        RequestHandler(fastcgi::ComponentContext *context) :
+                fastcgi::Component(context) {
+        }
+        virtual ~RequestHandler() {
+        }
 
-mongo :: BSONObj DatabaseManager::getBookBsonById (const string& bookId)
-{
-    mongo :: BSONObj p;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
-    while (cursor->more())
-    {
-        p = cursor->next();
-    }
-    return p;
-}
-
-
-string DatabaseManager::getBookByNameAndAuthor (const string& title, const string& author)
-{
-	string book;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("title" << title << "author" << author)));
-    if (cursor->more()) 
-	{
-        mongo :: BSONObj p = cursor->next();
-        book = p.jsonString();
-    }
-	return book;
-}
-
-vector<string> DatabaseManager::getBooksByAuthor(const string& author)
-{
-	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
-				MONGO_QUERY("author" << author)));
-	while (cursor->more())
-	{
-	   books.push_back(cursor->next().jsonString());
-	}
-	return books;
-}
-
-vector<string> DatabaseManager::getBooksByName(const string& bookName)
-{
-	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
-				MONGO_QUERY("title" << bookName)));
-	while (cursor->more())
-	{
-	   books.push_back(cursor->next().jsonString());
-	}
-	return books;
-}
-
-bool DatabaseManager :: addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl, string &response)
-{
-
-    mongo :: BSONObj bookBSON = BSON(mongo :: GENOID << "title" << title << "author" << author << "image_url" << imageUrl << "book_url" << bookUrl << "rating" << 0 );
+public:
+        virtual void onLoad() {
+        }
+        virtual void onUnload() {
+        }
     
-    try
-    {
-        connection.insert(getDatabaseName(booksTableName), bookBSON);
-    }
-    catch(exception &e)
-    {
-        response = "Incorrect request body.";
-        return false;
-    }
-    response = bookBSON.jsonString();
-    return true;
-}
+#pragma mark - handle request
+        virtual void handleRequest(fastcgi::Request *req, fastcgi::HandlerContext *context)
+        {
+            DatabaseManager manager;
+            manager.run();
+            string scriptName = req->getScriptName();
+            // len("/api/v1/") = 8
+            int startPosition = 8;
+            string collection = scriptName.substr(startPosition);
+            if (collection == "books")
+            {
+                string requestMethod = req->getRequestMethod();
+                if (requestMethod == "POST")
+                {
+                    handlePostRequest(req, context, manager);
+                }
+                if (requestMethod == "GET")
+                {
+                    handleGetRequest(req, context, manager);
+                }
+                if (requestMethod == "PUT")
+                {
+                    handlePutRequest(req, context, manager);
+                }
+            }
+            if (collection == "users")
+            {
+                string requestMethod = req->getRequestMethod();
+                if (requestMethod == "POST")
+                {
+                    handlePostRequestToUsers(req, context, manager);
+                }
+            }
+        }
 
-
-void DatabaseManager :: updateRating(const string& bookId, int rating, const string& userId)
-{
-	//int votesCount = connection.count(bookUserTableName, MONGO_QUERY("_id" << mongo :: OID(bookId)).where("rating > 0"));
-	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
-				MONGO_QUERY("bookId" << bookId << "userId" << "userId")));
-	//int previousUserRating = 0;
-	if (cursor->more()) // if he voted
-	{
-		connection.update(getDatabaseName(bookUserTableName), MONGO_QUERY("bookId" << bookId << "userId" << userId), BSON("$set" << BSON( "rating" << rating)));
-	}
-	else
-	{
-		//add rating, he never voted
-		//add to Book_User
-		connection.insert(getDatabaseName(bookUserTableName), BSON("bookId" << bookId << "userId" << userId << "rating" << rating));
-		recountRating(bookId);
-	}    
-}
-
-void DatabaseManager :: recountRating(const string& bookId)
-{
-	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
-				MONGO_QUERY("bookId" << bookId)));
-	int votesCount = 0;
-	long commonRating = 0;
-	int ratingNumber = 0;
-	while(cursor->more())
-	{
-		mongo :: BSONObj p = cursor->next();
-        	mongo :: BSONElement rating = p.getField("rating");
-		if (rating.isNumber())
-			ratingNumber = rating.Int();
-		else
-			ratingNumber = atoi(rating.String().c_str());
-		commonRating += ratingNumber;
-		votesCount++;
-	}
-	if (votesCount > 0)
-	{
-		double resultRating = commonRating / votesCount;
-		connection.update(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId)), 
-													BSON("$set" << BSON( "rating" << resultRating)));
-	}
-}
-
-bool DatabaseManager :: addUser(const string& login, const string& password, string &response)
-{
-    mongo :: BSONObj userBSON = BSON(mongo :: GENOID << "login" << login << "password" << password);
+#pragma mark - books requests
     
-    try
+        void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
+        {
+            fastcgi::RequestStream stream(req);
+
+//			std::vector<std::string> names;
+//			req->argNames(names);
+//			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
+//				stream << *it << " ";
+//			stream << req->countArgs();
+
+            if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
+            {
+                fastcgi :: DataBuffer buffer = req->requestBody();
+                string jsonString;
+                buffer.toString(jsonString);
+                mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
+                mongo :: BSONElement rating = bookBSON.getField("rating");
+                string bookId = req->getArg("bookid");
+				string userId = req->getArg("userid");
+                int ratingNumber = 0;
+                try
+                {
+                    if (rating.isNumber())
+                        ratingNumber = rating.Int();
+                    else
+                        ratingNumber = atoi(rating.String().c_str());
+                }
+                catch(std :: exception e)
+                {
+                    sendError(req, stream, 400);
+                    return;
+                }
+                if (ratingNumber >= 0 && ratingNumber <= 10)
+                {
+                    manager.updateRating(bookId, ratingNumber, userId);//TODO: user id required
+                } else
+                {
+                    sendError(req, stream, 400);
+                    return;
+                }
+            } else
+            {
+                sendError(req, stream, 400);
+                return;
+            }
+        }
+    
+        void handlePostRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
+        {        
+			fastcgi::RequestStream stream(req);
+			
+			std::vector<std::string> names;
+			req->argNames(names);
+			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
+				stream << *it << " ";
+            fastcgi :: DataBuffer buffer = req->requestBody();
+            string jsonString;
+            buffer.toString(jsonString);
+            
+            mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
+            mongo :: BSONElement title = bookBSON.getField("title");
+            mongo :: BSONElement author = bookBSON.getField("author");
+            mongo :: BSONElement imageUrl = bookBSON.getField("image_url");
+            mongo :: BSONElement bookUrl = bookBSON.getField("book_url");
+            if (!title.eoo() && !author.eoo())
+            {
+                if (title.valuestrsize() > 1 && author.valuestrsize() > 1)
+                {
+                    string response;
+                    bool success = manager.addBook(title.str(), author.str(), imageUrl.str(), bookUrl.str(), response);
+                    if (success)
+                    {
+                        stream << response;
+                        return;
+                    }
+                    sendError(req, stream, response, 400);
+                } else
+                {
+                    sendError(req, stream, 400);
+                }
+            } else
+            {
+                string message = "Incorrect title or author name.";
+                sendError(req, stream, message, 400);
+            }
+        }
+    
+        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, string &message, int status)
+        {
+            stream << "{ \"error\" : \"" + message + "\" }";
+            req->setStatus(status);
+        }
+    
+        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, int status)
+        {
+            string message = "Incorrect request body";
+            sendError(req, stream, message, status);
+        }
+    
+        void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
+        {
+            fastcgi::RequestStream stream(req);
+			if (req->countArgs() == 0)
+			{
+				vector<string> books = manager.getAllBooks();
+				string s;
+				for(int i = 0; i < books.size(); i++)
+					s += books[i];
+				stream << "ALL BOOKS: " << s << " \n";
+			}
+            
+            if (req->hasArg("bookid") && req->countArgs() == 1)
+            {
+                string bookId = req->getArg("bookid");
+                stream << "BOOK : " << manager.getBookById(bookId) << " \n";
+            }
+            else if (req->hasArg("author")&& req->countArgs() == 1)
+            {
+                vector<string> books = manager.getBooksByAuthor(req->getArg("author"));
+                string booksJSON;
+                for(int i = 0; i < books.size(); i++)
+                    booksJSON += books[i];
+                stream << "Books by author: " << booksJSON;
+            }
+            else if (req->hasArg("bookname")&& req->countArgs() == 1)
+            {
+                vector<string> books = manager.getBooksByName(req->getArg("bookname"));
+                string booksJSON;
+                for(int i = 0; i < books.size(); i++)
+                    booksJSON += books[i];
+                stream << "Books by name: " << booksJSON;
+            }
+            else if(req->countArgs() == 2 && req->hasArg("bookname")&& req->hasArg("author"))
+            {
+                string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
+                stream << "Books by name and author: " << booksJSON; 
+            }
+        }
+    
+#pragma mark - users requests
+    
+    void handlePostRequestToUsers(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
     {
-        connection.insert(getDatabaseName(userTableName), userBSON);
+        fastcgi::RequestStream stream(req);
+        
+        fastcgi :: DataBuffer buffer = req->requestBody();
+        string jsonString;
+        buffer.toString(jsonString);
+        
+        mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
+        mongo :: BSONElement login = bookBSON.getField("login");
+        mongo :: BSONElement password = bookBSON.getField("password");
+		stream << "hi!\n\n\n" << login << "\n\n" << password;
+		return;
+        if (!login.eoo() && !password.eoo())
+        {
+            if (login.valuestrsize() > 1 && password.valuestrsize() > 1)
+            {
+                if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg("signup") == "0"))
+                {
+                    string response;
+                    bool success = manager.checkUser(login, password, response);
+                    if (success)
+                    {
+                        stream << response;
+                        return;
+                    }
+                    string message = "Incorrect login or password";
+                    sendError(req, stream, message, 401);
+                } else
+                {
+                    string response;
+                    bool uniqueLogin = manager.checkLoginExists(login);
+                    if (uniqueLogin)
+                    {
+                        bool success = manager.addUser(login, password, response);
+                        if (success)
+                        {
+                            stream << response;
+                            return;
+                        }
+                        sendError(req, stream, response, 400);
+                    } else
+                    {
+                        string message = "Such login exists";
+                        sendError(req, stream, message, 401);
+                    }
+                }
+            } else
+            {
+                sendError(req, stream, 400);
+            }
+        } else
+        {
+            string message = "Incorrect login or password.";
+            sendError(req, stream, message, 401);
+        }
     }
-    catch(exception &e)
-    {
-        response = "Incorrect request body.";
-        return false;
-    }
-    response = userBSON.jsonString();
-    return true;
-}
+    
+    
+};
 
-
-bool DatabaseManager :: checkUser (const string& login, const string& password, string &response) // response = user id 
-{
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), MONGO_QUERY("login" << login << "password" << password)));
-    if (cursor->more()) 
-	{
-		mongo :: BSONObj user = cursor->next();
-		mongo :: BSONElement userId = user.getField("_id");
-		response = "{ \"userid\" : \"" + userId.String() + "\"}"; 
-        return true;
-    }
-	return false;
-}
-
-bool DatabaseManager :: checkLoginExists(const string& login) 
-{
-	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), MONGO_QUERY("login" << login)));
-    if (cursor->more()) 
-	{
-        return true;
-    }
-	return false;
-}
-
-
-//void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
-//{
-//	db.update(booksTableName,
-//		BSON("title" << book.getTitle() << "author" << book.getAuthor() << "imageUrl" 
-//			<< book.getImageUrl << "bookUrl" << book.getBookUrl() << "rating" << book.getRating()),
-//		BSON("$inc" << BSON( "rating" << rating)));
-//		
-//}
+FCGIDAEMON_REGISTER_FACTORIES_BEGIN()
+FCGIDAEMON_ADD_DEFAULT_FACTORY("simple_factory", RequestHandler)
+FCGIDAEMON_REGISTER_FACTORIES_END()

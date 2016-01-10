@@ -225,7 +225,7 @@ public:
         {
             if (login.valuestrsize() > 1 && password.valuestrsize() > 1)
             {
-                if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg(signup) == 0))
+                if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg("signup") == "0"))
                 {
                     string response;
                     bool success = manager.checkUser(login, password, response);
