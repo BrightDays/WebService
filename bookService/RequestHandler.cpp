@@ -31,36 +31,53 @@ public:
         }
         virtual void onUnload() {
         }
+    
+#pragma mark - handle request
         virtual void handleRequest(fastcgi::Request *req, fastcgi::HandlerContext *context)
         {
             DatabaseManager manager;
             manager.run();
-
-            string requestMethod = req->getRequestMethod();
-            if (requestMethod == "POST")
+            string scriptName = req->getScriptName();
+            // len("/api/v1/") = 8
+            int startPosition = 8;
+            string collection = scriptName.substr(startPosition);
+            if (collection == "books")
             {
-                handlePostRequest(req, context, manager);
+                string requestMethod = req->getRequestMethod();
+                if (requestMethod == "POST")
+                {
+                    handlePostRequest(req, context, manager);
+                }
+                if (requestMethod == "GET")
+                {
+                    handleGetRequest(req, context, manager);
+                }
+                if (requestMethod == "PUT")
+                {
+                    handlePutRequest(req, context, manager);
+                }
             }
-            if (requestMethod == "GET")
+            if (collection == "users")
             {
-                handleGetRequest(req, context, manager);
+                string requestMethod = req->getRequestMethod();
+                if (requestMethod == "POST")
+                {
+                    handlePostRequestToUsers(req, context, manager);
+                }
             }
-            if (requestMethod == "PUT")
-            {
-                handlePutRequest(req, context, manager);
-            }
-            
         }
+
+#pragma mark - books requests
     
         void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
 
-			std::vector<std::string> names;
-			req->argNames(names);
-			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
-				stream << *it << " ";
-			stream << req->countArgs();
+//			std::vector<std::string> names;
+//			req->argNames(names);
+//			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
+//				stream << *it << " ";
+//			stream << req->countArgs();
 
             if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
             {
@@ -81,7 +98,6 @@ public:
                 }
                 catch(std :: exception e)
                 {
-					stream << "1\n";
                     sendError(req, stream, 400);
                     return;
                 }
@@ -90,13 +106,11 @@ public:
                     manager.updateRating(bookId, ratingNumber, userId);//TODO: user id required
                 } else
                 {
-					stream << "2\n";
                     sendError(req, stream, 400);
                     return;
                 }
             } else
             {
-				stream << "3\n";
                 sendError(req, stream, 400);
                 return;
             }
@@ -110,8 +124,6 @@ public:
 			req->argNames(names);
 			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
 				stream << *it << " ";
-			stream << req->countArgs();
-			return;
             fastcgi :: DataBuffer buffer = req->requestBody();
             string jsonString;
             buffer.toString(jsonString);
@@ -159,8 +171,6 @@ public:
         void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
-
-	    stream << req->getUrl();
 			if (req->countArgs() == 0)
 			{
 				vector<string> books = manager.getAllBooks();
@@ -197,6 +207,65 @@ public:
                 stream << "Books by name and author: " << booksJSON; 
             }
         }
+    
+#pragma mark - users requests
+    
+    void handlePostRequestToUsers(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
+    {
+        fastcgi::RequestStream stream(req);
+        
+        fastcgi :: DataBuffer buffer = req->requestBody();
+        string jsonString;
+        buffer.toString(jsonString);
+        
+        mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
+        mongo :: BSONElement login = bookBSON.getField("login");
+        mongo :: BSONElement password = bookBSON.getField("password");
+        if (!login.eoo() && !password.eoo())
+        {
+            if (login.valuestrsize() > 1 && password.valuestrsize() > 1)
+            {
+                if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg(signup) == 0))
+                {
+                    string response;
+                    bool success = manager.checkUser(login, password, response);
+                    if (success)
+                    {
+                        stream << response;
+                        return;
+                    }
+                    string message = "Incorrect login or password";
+                    sendError(req, stream, message, 401);
+                } else
+                {
+                    string response;
+                    bool uniqueLogin = manager.checkLoginExists(login);
+                    if (uniqueLogin)
+                    {
+                        bool success = manager.addUser(login, password, response);
+                        if (success)
+                        {
+                            stream << response;
+                            return;
+                        }
+                        sendError(req, stream, response, 400);
+                    } else
+                    {
+                        string message = "Such login exists";
+                        sendError(req, stream, message, 401);
+                    }
+                }
+            } else
+            {
+                sendError(req, stream, 400);
+            }
+        } else
+        {
+            string message = "Incorrect login or password.";
+            sendError(req, stream, message, 401);
+        }
+    }
+    
     
 };
 
