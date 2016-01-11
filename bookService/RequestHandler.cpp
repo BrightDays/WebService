@@ -159,6 +159,7 @@ public:
         void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
+	    stream << req->getUrl();
 			if (req->countArgs() == 0)
 			{
 				vector<string> books = manager.getAllBooks();
