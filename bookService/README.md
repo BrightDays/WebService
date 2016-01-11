@@ -1,9 +1,89 @@
 
 # Books
 
-### PUT /api/v1/books?bookid=BOOK_ID 
+### GET /api/v1/books/BOOK_ID 
 
-где BOOK_ID - уже известная книга, тогда обновляем рейтинг, если запрос корректен(rating = [0, 10])
+Доступ к конкретной книге.
+
+##### Коды возврата:
+
+200 - Success <br/>
+400 - Error <br/>
+404 - Invalid url <br/>
+
+#### Пример возвращаемых данных:
+    {
+        “title” : “451”,
+        “author” : “Ray”,
+        “rating” : “5”,
+        “img_url” : “/api/v1/books/123/icon.jpg”,
+        “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
+    }
+
+img_url - обложка книги, загружается пользователем при создании книги; ее может не быть.
+book_url  - ссылка на скачивание книги, ее может не быть, загружается пользователем при создании книги.
+
+
+
+### GET /api/v1/books
+
+Доступ ко всем книгам.
+
+#### Коды возврата:
+200 - Success <br/>
+400 - Error <br/>
+404 - Invalid url <br/>
+
+#### Пример возвращаемых данных:
+
+    [
+        {
+            “title” : “451”,
+            “author” : “Ray”,
+            “rating” : “5”
+            “img_url” : “/api/v1/books/123/icon.jpg”
+            “book_url” : “/api/v1/books/123/123.fb2”
+        },
+        {
+            “title” : “Ann”,
+            “author” : “Lev”,
+            “rating” : “4”
+            “img_url” : “/api/v1/books/125/icon.jpg”
+            “book_url” : “/api/v1/books/125/125.fb2”
+        }
+    ]
+
+### Другие GET запросы
+
+#### GET /api/v1/books?bookname=BOOK_NAME&author=AUTHOR_NAME
+#### GET /api/v1/books?author=AUTHOR_NAME
+#### GET /api/v1/books?bookname=BOOK_NAME
+
+
+#### Коды возврата:
+200 - Success <br/>
+400 - Error <br/>
+404 - Invalid url <br/>
+
+#### Пример
+
+GET /api/v1/books?bookname=451
+
+    [
+        {
+            “title” : “451”,
+            “author” : “Ray”,
+            “rating” : “5”
+            “img_url” : “/api/v1/books/123/icon.jpg”
+            “book_url” : “/api/v1/books/123/123.fb2”
+        }
+    ]
+
+
+
+### PUT /api/v1/books/BOOK_ID?userid=USER_ID
+
+где BOOK_ID - уже известная книга, USER_ID зарегистрированный пользователь. Тогда обновляем рейтинг, если запрос корректен(rating = [0, 10])
 
 #### Пример входных данных:
 
@@ -36,9 +116,6 @@
         “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
 	}
 
-
-где BOOK_ID - сгенерированный хеш  для книги  <br/>
-
 #### Пример выходных данных:
 
 	{
@@ -48,7 +125,9 @@
         “img_url” : “/api/v1/books/123/icon.jpg”,
         “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
 	}
-		
+
+где BOOK_ID - сгенерированный хеш  для книги  <br/>
+
 #### Коды возврата:
 200 - Success <br/>
 400 - Error <br/>
@@ -61,67 +140,56 @@ Response json:
 404 - Invalid url <br/>
 
 
-### GET /api/v1/books?bookid=BOOK_ID 
+# Users
 
-Доступ к конкретной книге.
+### POST /api/v1/users/signup
+
+Регистрация
 
 ##### Коды возврата:
 
 200 - Success <br/>
 400 - Error <br/>
+401 - Such login exists <br/>
 404 - Invalid url <br/>
+
+#### Пример входных данных:
+    {
+        "login" : "admin",
+        "password" : "admin"
+    }
 
 #### Пример возвращаемых данных:
     {
-        “title” : “451”,
-        “author” : “Ray”,
-        “rating” : “5”,
-        “img_url” : “/api/v1/books/123/icon.jpg”,
-        “book_url” : “/api/v1/books/BOOK_ID/123.fb2”
+        "login" : "admin",
+        "password" : "admin",
+        "userid" : 13jklqjkdsa98123
     }
 
-img_url - обложка книги, загружается пользователем при создании книги; ее может не быть.
-book_url  - ссылка на скачивание книги, ее может не быть, загружается пользователем при создании книги.
 
 
+### POST /api/v1/users/signin
 
+Авторизация
 
-#### GET/api/v1/books?page=PAGE_NUMBER&limit=LIMIT&rating=RATING
-#### GET /api/v1/books?page=PAGE_NUMBER&limit=LIMIT
-#### GET /api/v1/books?bookname=BOOK_NAME&author=AUTHOR_NAME
-#### GET /api/v1/books?author=AUTHOR_NAME
-#### GET /api/v1/books?bookname=BOOK_NAME
+##### Коды возврата:
 
-
-#### Коды возврата:
 200 - Success <br/>
 400 - Error <br/>
+401 - Incorrect login or password <br/>
 404 - Invalid url <br/>
 
-#### Пример
-
-PAGE_NUMBER = 2
-LIMIT = 2
-GET /api/v1/books?page=2&limit=2
-
+#### Пример входных данных:
     {
-        “books”: 
-        [
-            {
-            “title” : “451”,
-            “author” : “Ray”,
-            “rating” : “5”
-            “img_url” : “/api/v1/books/123/icon.jpg”
-            “book_url” : “/api/v1/books/123/123.fb2”
-            } ,
-            {
-            “title” : “Ann”,
-            “author” : “Leo”,
-            “rating” : “5”
-            “img_url” : “/api/v1/books/124/icon.jpg”
-            “book_url” : “/api/v1/books/124/124.fb2”
-            }
-        ]
+        "login" : "admin",
+        "password" : "admin"
+    }
+
+#### Пример возвращаемых данных:
+    {
+        "login" : "admin",
+        "password" : "admin",
+        "userid" : 13jklqjkdsa98123
     }
 
 
