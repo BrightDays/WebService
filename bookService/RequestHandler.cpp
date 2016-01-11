@@ -15,6 +15,7 @@
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost/api/v1/books
 //curl -H "Content-Type: application/json" -X POST -d '{"title" : "1984", "author" : "Orwell", "image_url" : "", "book_url" : "", "rating" : "0" }' http://localhost/api/v1/books
 //curl -H "Content-Type: application/json" -X PUT --data '{"rating" : "10"}' http://localhost/api/v1/books?bookid=566aea019f4f815613e5de8a
+//curl -H "Content-Type: application/json" -X POST -d '{"login":"admin","password":"admin"}' http://localhost/api/v1/users
 
 
 class RequestHandler : virtual public fastcgi::Component, virtual public fastcgi::Handler {
@@ -31,46 +32,70 @@ public:
         }
         virtual void onUnload() {
         }
+    
+#pragma mark - handle request
         virtual void handleRequest(fastcgi::Request *req, fastcgi::HandlerContext *context)
         {
             DatabaseManager manager;
             manager.run();
-
-            string requestMethod = req->getRequestMethod();
-            if (requestMethod == "POST")
+            std :: string scriptName = req->getScriptName();
+            // len("/api/v1/") = 8
+            int startPosition = 8;
+            std :: string collection = scriptName.substr(startPosition);
+            if (collection == "books")
             {
-                handlePostRequest(req, context, manager);
+                std :: string requestMethod = req->getRequestMethod();
+                if (requestMethod == "POST")
+                {
+                    handlePostRequest(req, context, manager);
+                }
+                if (requestMethod == "GET")
+                {
+                    handleGetRequest(req, context, manager);
+                }
+                if (requestMethod == "PUT")
+                {
+                    handlePutRequest(req, context, manager);
+                }
             }
-            if (requestMethod == "GET")
+            if (collection == "users")
             {
-                handleGetRequest(req, context, manager);
+                std :: string requestMethod = req->getRequestMethod();
+                if (requestMethod == "POST")
+                {
+                    handlePostRequestToUsers(req, context, manager);
+                }
             }
-            if (requestMethod == "PUT")
-            {
-                handlePutRequest(req, context, manager);
-            }
-            
         }
+
+#pragma mark - books requests
     
         void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
 
-			std::vector<std::string> names;
-			req->argNames(names);
-			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
-				stream << *it << " ";
-			stream << req->countArgs();
+//			std::vector<std::string> names;
+//			req->argNames(names);
+//			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
+//				stream << *it << " ";
+//			stream << req->countArgs();
 
             if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
             {
                 fastcgi :: DataBuffer buffer = req->requestBody();
-                string jsonString;
+                std :: string jsonString;
                 buffer.toString(jsonString);
                 mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
                 mongo :: BSONElement rating = bookBSON.getField("rating");
-                string bookId = req->getArg("bookid");
-				string userId = req->getArg("userid");
+                std :: string bookId = req->getArg("bookid");
+				std :: string userId = req->getArg("userid");
+                bool userIdExists = manager.userIdExists(userId);
+                if (!userIdExists)
+                {
+                    std :: string message = "Incorrect user";
+                    sendError(req, stream, message, 401);
+                    return;
+                }
                 int ratingNumber = 0;
                 try
                 {
@@ -81,7 +106,6 @@ public:
                 }
                 catch(std :: exception e)
                 {
-					stream << "1\n";
                     sendError(req, stream, 400);
                     return;
                 }
@@ -90,13 +114,11 @@ public:
                     manager.updateRating(bookId, ratingNumber, userId);//TODO: user id required
                 } else
                 {
-					stream << "2\n";
                     sendError(req, stream, 400);
                     return;
                 }
             } else
             {
-				stream << "3\n";
                 sendError(req, stream, 400);
                 return;
             }
@@ -110,10 +132,8 @@ public:
 			req->argNames(names);
 			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
 				stream << *it << " ";
-			stream << req->countArgs();
-			return;
             fastcgi :: DataBuffer buffer = req->requestBody();
-            string jsonString;
+            std :: string jsonString;
             buffer.toString(jsonString);
             
             mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
@@ -125,7 +145,7 @@ public:
             {
                 if (title.valuestrsize() > 1 && author.valuestrsize() > 1)
                 {
-                    string response;
+                    std :: string response;
                     bool success = manager.addBook(title.str(), author.str(), imageUrl.str(), bookUrl.str(), response);
                     if (success)
                     {
@@ -139,12 +159,12 @@ public:
                 }
             } else
             {
-                string message = "Incorrect title or author name.";
+                std :: string message = "Incorrect title or author name.";
                 sendError(req, stream, message, 400);
             }
         }
     
-        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, string &message, int status)
+        void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, std :: string &message, int status)
         {
             stream << "{ \"error\" : \"" + message + "\" }";
             req->setStatus(status);
@@ -152,7 +172,7 @@ public:
     
         void sendError(fastcgi::Request *req,fastcgi::RequestStream &stream, int status)
         {
-            string message = "Incorrect request body";
+            std :: string message = "Incorrect request body";
             sendError(req, stream, message, status);
         }
     
@@ -162,8 +182,8 @@ public:
 	    stream << req->getUrl();
 			if (req->countArgs() == 0)
 			{
-				vector<string> books = manager.getAllBooks();
-				string s;
+				std :: vector<std :: string> books = manager.getAllBooks();
+				std :: string s;
 				for(int i = 0; i < books.size(); i++)
 					s += books[i];
 				stream << "ALL BOOKS: " << s << " \n";
@@ -171,31 +191,90 @@ public:
             
             if (req->hasArg("bookid") && req->countArgs() == 1)
             {
-                string bookId = req->getArg("bookid");
+                std :: string bookId = req->getArg("bookid");
                 stream << "BOOK : " << manager.getBookById(bookId) << " \n";
             }
             else if (req->hasArg("author")&& req->countArgs() == 1)
             {
-                vector<string> books = manager.getBooksByAuthor(req->getArg("author"));
-                string booksJSON;
+                std :: vector<std :: string> books = manager.getBooksByAuthor(req->getArg("author"));
+                std :: string booksJSON;
                 for(int i = 0; i < books.size(); i++)
                     booksJSON += books[i];
                 stream << "Books by author: " << booksJSON;
             }
             else if (req->hasArg("bookname")&& req->countArgs() == 1)
             {
-                vector<string> books = manager.getBooksByName(req->getArg("bookname"));
-                string booksJSON;
+                std :: vector<std :: string> books = manager.getBooksByName(req->getArg("bookname"));
+                std :: string booksJSON;
                 for(int i = 0; i < books.size(); i++)
                     booksJSON += books[i];
                 stream << "Books by name: " << booksJSON;
             }
             else if(req->countArgs() == 2 && req->hasArg("bookname")&& req->hasArg("author"))
             {
-                string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
+                std :: string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
                 stream << "Books by name and author: " << booksJSON; 
             }
         }
+    
+#pragma mark - users requests
+    
+    void handlePostRequestToUsers(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
+    {
+        fastcgi::RequestStream stream(req);
+        
+        fastcgi :: DataBuffer buffer = req->requestBody();
+        std :: string jsonString;
+        buffer.toString(jsonString);
+        
+        mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
+        mongo :: BSONElement login = bookBSON.getField("login");
+        mongo :: BSONElement password = bookBSON.getField("password");
+        if (!login.eoo() && !password.eoo())
+        {
+            if (login.valuestrsize() > 1 && password.valuestrsize() > 1)
+            {
+                if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg("signup") == "0"))
+                {
+                    std :: string response;
+                    bool success = manager.checkUser(login.str(), password.str(), response);
+                    if (success)
+                    {
+                        stream << response;
+                        return;
+                    }
+                    std :: string message = "Incorrect login or password";
+                    sendError(req, stream, message, 401);
+                } else
+                {
+                    std :: string response;
+                    bool loginExists = manager.checkLoginExists(login.str());
+                    if (!loginExists)
+                    {
+                        bool success = manager.addUser(login.str(), password.str(), response);
+                        if (success)
+                        {
+                            stream << response;
+                            return;
+                        }
+                        sendError(req, stream, response, 400);
+                    } else
+                    {
+                        std :: string message = "Such login exists";
+                        sendError(req, stream, message, 401);
+                    }
+                }
+            } else
+            {
+                sendError(req, stream, 400);
+            }
+        } else
+        {
+            std :: string message = "Incorrect login or password.";
+            sendError(req, stream, message, 401);
+        }
+    }
+    
     
 };
 

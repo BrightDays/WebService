@@ -1,8 +1,6 @@
 #include "DatabaseManager.h"
 #include <memory>
 
-using namespace std;
-
 
 DatabaseManager::DatabaseManager()
 {
@@ -18,16 +16,16 @@ void DatabaseManager::run()
 	connection.connect("localhost");//TODO: change loclahost to ip
 }
 
-string DatabaseManager :: getDatabaseName(const string& tableName)
+std :: string DatabaseManager :: getDatabaseName(const std :: string& tableName)
 {
     return databaseName + "." + tableName;
 }
 
 
-vector<string> DatabaseManager::getAllBooks()
+std :: vector<std :: string> DatabaseManager::getAllBooks()
 {
-	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName), mongo :: BSONObj()));
+	std :: vector<std :: string> books;
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName), mongo :: BSONObj()));
 	while (cursor->more())
 	{
 	   books.push_back(cursor->next().jsonString());
@@ -38,10 +36,11 @@ vector<string> DatabaseManager::getAllBooks()
 	return books;
 }
 
-string DatabaseManager::getBookById (const string& bookId)
+std :: string DatabaseManager::getBookById (const std :: string& bookId)
 {
-	string book;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
+	std :: string book;
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), 
+	MONGO_QUERY("_id" << mongo :: OID(bookId) )));
     while (cursor->more()) 
 	{
         mongo :: BSONObj p = cursor->next();
@@ -50,10 +49,10 @@ string DatabaseManager::getBookById (const string& bookId)
 	return book;
 }
 
-mongo :: BSONObj DatabaseManager::getBookBsonById (const string& bookId)
+mongo :: BSONObj DatabaseManager::getBookBsonById (const std :: string& bookId)
 {
     mongo :: BSONObj p;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId) )));
     while (cursor->more())
     {
         p = cursor->next();
@@ -62,10 +61,10 @@ mongo :: BSONObj DatabaseManager::getBookBsonById (const string& bookId)
 }
 
 
-string DatabaseManager::getBookByNameAndAuthor (const string& title, const string& author)
+std :: string DatabaseManager::getBookByNameAndAuthor (const std :: string& title, const std :: string& author)
 {
-	string book;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("title" << title << "author" << author)));
+	std :: string book;
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(booksTableName), MONGO_QUERY("title" << title << "author" << author)));
     if (cursor->more()) 
 	{
         mongo :: BSONObj p = cursor->next();
@@ -74,10 +73,10 @@ string DatabaseManager::getBookByNameAndAuthor (const string& title, const strin
 	return book;
 }
 
-vector<string> DatabaseManager::getBooksByAuthor(const string& author)
+std :: vector<std :: string> DatabaseManager::getBooksByAuthor(const std :: string& author)
 {
-	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
+	std :: vector<std :: string> books;
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
 				MONGO_QUERY("author" << author)));
 	while (cursor->more())
 	{
@@ -86,10 +85,10 @@ vector<string> DatabaseManager::getBooksByAuthor(const string& author)
 	return books;
 }
 
-vector<string> DatabaseManager::getBooksByName(const string& bookName)
+std :: vector<std :: string> DatabaseManager::getBooksByName(const std :: string& bookName)
 {
-	vector<string>books;
-    auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
+	std :: vector<std :: string>books;
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(booksTableName),  
 				MONGO_QUERY("title" << bookName)));
 	while (cursor->more())
 	{
@@ -98,7 +97,8 @@ vector<string> DatabaseManager::getBooksByName(const string& bookName)
 	return books;
 }
 
-bool DatabaseManager :: addBook(const string& title, const string& author, const string& imageUrl, const string& bookUrl, string &response)
+bool DatabaseManager :: addBook(const std :: string& title, const std :: string& author, 
+const std :: string& imageUrl, const std :: string& bookUrl, std :: string &response)
 {
 
     mongo :: BSONObj bookBSON = BSON(mongo :: GENOID << "title" << title << "author" << author << "image_url" << imageUrl << "book_url" << bookUrl << "rating" << 0 );
@@ -107,7 +107,7 @@ bool DatabaseManager :: addBook(const string& title, const string& author, const
     {
         connection.insert(getDatabaseName(booksTableName), bookBSON);
     }
-    catch(exception &e)
+    catch(std :: exception &e)
     {
         response = "Incorrect request body.";
         return false;
@@ -117,15 +117,16 @@ bool DatabaseManager :: addBook(const string& title, const string& author, const
 }
 
 
-void DatabaseManager :: updateRating(const string& bookId, int rating, const string& userId)
+void DatabaseManager :: updateRating(const std :: string& bookId, int rating, const std :: string& userId)
 {
 	//int votesCount = connection.count(bookUserTableName, MONGO_QUERY("_id" << mongo :: OID(bookId)).where("rating > 0"));
-	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
-				MONGO_QUERY("bookId" << bookId << "userId" << "userId")));
+	std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
+				MONGO_QUERY("bookId" << bookId << "userId" << userId)));
 	//int previousUserRating = 0;
 	if (cursor->more()) // if he voted
 	{
-		connection.update(getDatabaseName(bookUserTableName), MONGO_QUERY("bookId" << bookId << "userId" << userId), BSON("$set" << BSON( "rating" << rating)));
+		connection.update(getDatabaseName(bookUserTableName), MONGO_QUERY("bookId" << bookId << "userId" << userId), 
+		BSON("$set" << BSON( "rating" << rating)));
 	}
 	else
 	{
@@ -136,9 +137,9 @@ void DatabaseManager :: updateRating(const string& bookId, int rating, const str
 	}    
 }
 
-void DatabaseManager :: recountRating(const string& bookId)
+void DatabaseManager :: recountRating(const std :: string& bookId)
 {
-	auto_ptr<mongo :: DBClientCursor> cursor = auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
+	std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor>(connection.query(getDatabaseName(bookUserTableName),  
 				MONGO_QUERY("bookId" << bookId)));
 	int votesCount = 0;
 	long commonRating = 0;
@@ -160,6 +161,58 @@ void DatabaseManager :: recountRating(const string& bookId)
 		connection.update(getDatabaseName(booksTableName), MONGO_QUERY("_id" << mongo :: OID(bookId)), 
 													BSON("$set" << BSON( "rating" << resultRating)));
 	}
+}
+
+bool DatabaseManager :: addUser(const std :: string& login, const std :: string& password, std :: string &response)
+{
+    mongo :: BSONObj userBSON = BSON(mongo :: GENOID << "login" << login << "password" << password);
+    
+    try
+    {
+        connection.insert(getDatabaseName(userTableName), userBSON);
+    }
+    catch(std :: exception &e)
+    {
+        response = "Incorrect request body.";
+        return false;
+    }
+    response = userBSON.jsonString();
+    return true;
+}
+
+
+bool DatabaseManager :: checkUser (const std :: string& login, const std :: string& password, std :: string &response) // response = user id 
+{
+    std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), MONGO_QUERY("login" << login << "password" << password)));
+    if (cursor->more()) 
+	{
+		mongo :: BSONObj user = cursor->next();
+		response = user.jsonString();
+		return true;
+    }
+	return false;
+}
+
+bool DatabaseManager :: checkLoginExists(const std :: string& login) 
+{
+	std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), MONGO_QUERY("login" << login)));
+    if (cursor->more()) 
+	{
+        return true;
+    }
+	return false;
+}
+
+
+bool DatabaseManager :: userIdExists(std :: string& userId)
+{
+	std :: auto_ptr<mongo :: DBClientCursor> cursor = std :: auto_ptr<mongo :: DBClientCursor> (connection.query(getDatabaseName(userTableName), 
+	MONGO_QUERY("_id" << mongo :: OID(userId))));
+    if (cursor->more()) 
+	{
+        return true;
+    }
+	return false;
 }
 
 //void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
