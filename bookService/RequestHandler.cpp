@@ -184,11 +184,7 @@ public:
         void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
-<<<<<<< HEAD
-	    stream << req->getUrl();
-=======
 
->>>>>>> 7ba4db6806733f22d07dcfc6954b7808a2d34f0b
 			if (req->countArgs() == 0)
 			{
                 if (req->getScriptName() == DEFAULT_BOOKS_URL)
