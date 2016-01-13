@@ -266,7 +266,7 @@ public:
             if (login.valuestrsize() > 1 && password.valuestrsize() > 1)
             {
                 std :: string url = DEFAULT_USERS_URL;
-                url.append("signin");
+                url.append("/signin");
                 if (req->getScriptName() == url)
                 {
                     std :: string response;
@@ -280,11 +280,12 @@ public:
                     sendError(req, stream, message, 401);
                 }
                 url = DEFAULT_USERS_URL;
-                url.append("signup");
+                url.append("/signup");
                 if (req->getScriptName() == url)
                 {
                     std :: string response;
                     bool loginExists = manager.checkLoginExists(login.str());
+		    stream << "\nloginExists: " << loginExists;
                     if (!loginExists)
                     {
                         bool success = manager.addUser(login.str(), password.str(), response);
