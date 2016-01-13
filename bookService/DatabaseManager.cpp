@@ -224,6 +224,11 @@ bool DatabaseManager :: userIdExists(std :: string& userId)
 	return false;
 }
 
+DatabaseManager :: ~DatabaseManager()
+{
+	delete[] connection;
+}
+
 //void DatabaseManager::updateRating(Book book, double rating) //TODO: check!
 //{
 //	db.update(booksTableName,

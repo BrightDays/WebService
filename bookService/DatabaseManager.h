@@ -19,6 +19,7 @@ public:
 	void recountRating(const std :: string& bookId);
     void run();
 	DatabaseManager();
+	~DatabaseManager();
     std :: string getDatabaseName(const std :: string& tableName);
 	std :: vector<std :: string> getAllBooks();
 	bool addBook(const std :: string&, const std :: string&, const std :: string&, const std :: string&, std :: string &);
