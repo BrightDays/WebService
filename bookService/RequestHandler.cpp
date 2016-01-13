@@ -285,7 +285,6 @@ public:
                 {
                     std :: string response;
                     bool loginExists = manager.checkLoginExists(login.str());
-		    stream << "\nloginExists: " << loginExists;
                     if (!loginExists)
                     {
                         bool success = manager.addUser(login.str(), password.str(), response);
