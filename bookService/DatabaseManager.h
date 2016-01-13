@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "mongo/client/dbclient.h" // for the driver
+#include "mongo/util/net/hostandport.h"
 
 
 class DatabaseManager 
@@ -12,7 +13,8 @@ private:
 	std :: string booksTableName;
 	std :: string userTableName;
 	std :: string bookUserTableName;
-	mongo::DBClientConnection connection;
+	std :: string replicaSetName;
+	mongo::DBClientReplicaSet* connection;
 public:
 	void recountRating(const std :: string& bookId);
     void run();
