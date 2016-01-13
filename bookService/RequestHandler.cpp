@@ -17,6 +17,11 @@
 //curl -H "Content-Type: application/json" -X PUT --data '{"rating" : "10"}' http://localhost/api/v1/books?bookid=566aea019f4f815613e5de8a
 //curl -H "Content-Type: application/json" -X POST -d '{"login":"admin","password":"admin"}' http://localhost/api/v1/users
 
+#define DEFAULT_URL "/api/v1/"
+#define DEFAULT_USERS_URL "/api/v1/users"
+#define DEFAULT_BOOKS_URL "/api/v1/books"
+
+
 
 class RequestHandler : virtual public fastcgi::Component, virtual public fastcgi::Handler {
 
@@ -38,10 +43,10 @@ public:
         {
             DatabaseManager manager;
             manager.run();
+            fastcgi::RequestStream stream(req);
             std :: string scriptName = req->getScriptName();
-            // len("/api/v1/") = 8
-            int startPosition = 8;
-            std :: string collection = scriptName.substr(startPosition);
+            int startPosition = strlen(DEFAULT_URL);
+            std :: string collection = scriptName.substr(startPosition, 5);
             if (collection == "books")
             {
                 std :: string requestMethod = req->getRequestMethod();
@@ -73,21 +78,20 @@ public:
         void handlePutRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
-
-//			std::vector<std::string> names;
-//			req->argNames(names);
-//			for(std::vector<std::string> :: iterator it = names.begin(); it != names.end(); it++)
-//				stream << *it << " ";
-//			stream << req->countArgs();
-
-            if (req->hasArg("bookid") && req->hasArg("userid") && req->countArgs() == 3)
+            if (!(req->getScriptName().find(DEFAULT_BOOKS_URL) == 0 && req->getScriptName() != DEFAULT_BOOKS_URL && req->getScriptName().length() > strlen(DEFAULT_BOOKS_URL) + 1))
+            {
+                sendError(req, stream, 404);
+                return;
+            }
+            int startPosition = strlen(DEFAULT_BOOKS_URL) + 1;
+            std :: string bookId = req->getScriptName().substr(startPosition);
+            if (req->hasArg("userid") && req->countArgs() == 2)
             {
                 fastcgi :: DataBuffer buffer = req->requestBody();
                 std :: string jsonString;
                 buffer.toString(jsonString);
                 mongo :: BSONObj bookBSON = mongo::fromjson(jsonString);
                 mongo :: BSONElement rating = bookBSON.getField("rating");
-                std :: string bookId = req->getArg("bookid");
 				std :: string userId = req->getArg("userid");
                 bool userIdExists = manager.userIdExists(userId);
                 if (!userIdExists)
@@ -119,7 +123,8 @@ public:
                 }
             } else
             {
-                sendError(req, stream, 400);
+                std :: string message = "Forbidden. Need authentication.";
+                sendError(req, stream, message, 403);
                 return;
             }
         }
@@ -179,41 +184,71 @@ public:
         void handleGetRequest(fastcgi::Request *req, fastcgi::HandlerContext *context, DatabaseManager &manager)
         {
             fastcgi::RequestStream stream(req);
+<<<<<<< HEAD
 	    stream << req->getUrl();
+=======
+
+>>>>>>> 7ba4db6806733f22d07dcfc6954b7808a2d34f0b
 			if (req->countArgs() == 0)
 			{
-				std :: vector<std :: string> books = manager.getAllBooks();
-				std :: string s;
-				for(int i = 0; i < books.size(); i++)
-					s += books[i];
-				stream << "ALL BOOKS: " << s << " \n";
+                if (req->getScriptName() == DEFAULT_BOOKS_URL)
+                {
+                    std :: vector<std :: string> books = manager.getAllBooks();
+                    std :: string s;
+                    if (books.size() == 0)
+                    {
+                        stream << "[]\n";
+                        return;
+                    }
+                    for(int i = 0; i < books.size() - 1; i++)
+                        s += books[i] + ",";
+                    if (books.size() > 0)
+                        s += books[books.size() - 1];
+                    stream << "[" << s << "]\n";
+                    return;
+                }
+                if (!(req->getScriptName().find(DEFAULT_BOOKS_URL) == 0 && req->getScriptName().length() > strlen(DEFAULT_BOOKS_URL) + 1))
+                {
+                    sendError(req, stream, 404);
+                    return;
+                }
+                int startPosition = strlen(DEFAULT_BOOKS_URL) + 1;
+                std :: string bookId = req->getScriptName().substr(startPosition);
+                stream << manager.getBookById(bookId) << " \n";
 			}
             
-            if (req->hasArg("bookid") && req->countArgs() == 1)
-            {
-                std :: string bookId = req->getArg("bookid");
-                stream << "BOOK : " << manager.getBookById(bookId) << " \n";
-            }
             else if (req->hasArg("author")&& req->countArgs() == 1)
             {
                 std :: vector<std :: string> books = manager.getBooksByAuthor(req->getArg("author"));
                 std :: string booksJSON;
-                for(int i = 0; i < books.size(); i++)
-                    booksJSON += books[i];
-                stream << "Books by author: " << booksJSON;
+                if (books.size() == 0)
+                {
+                    stream << "[]\n";
+                    return;
+                }
+                for(int i = 0; i < books.size() - 1; i++)
+                    booksJSON += books[i] + ",";
+                booksJSON += books[books.size() - 1];
+                stream << "[" << booksJSON << "]\n";
             }
             else if (req->hasArg("bookname")&& req->countArgs() == 1)
             {
                 std :: vector<std :: string> books = manager.getBooksByName(req->getArg("bookname"));
                 std :: string booksJSON;
-                for(int i = 0; i < books.size(); i++)
-                    booksJSON += books[i];
-                stream << "Books by name: " << booksJSON;
+                if (books.size() == 0)
+                {
+                    stream << "[]\n";
+                    return;
+                }
+                for(int i = 0; i < books.size() - 1; i++)
+                    booksJSON += books[i] + ",";
+                booksJSON += books[books.size() - 1];
+                stream << "[" << booksJSON << "]\n";
             }
             else if(req->countArgs() == 2 && req->hasArg("bookname")&& req->hasArg("author"))
             {
                 std :: string booksJSON = manager.getBookByNameAndAuthor(req->getArg("bookname"), req->getArg("author"));
-                stream << "Books by name and author: " << booksJSON; 
+                stream << booksJSON;
             }
         }
     
@@ -234,7 +269,9 @@ public:
         {
             if (login.valuestrsize() > 1 && password.valuestrsize() > 1)
             {
-                if (!req->hasArg("signup") || (req->hasArg("signup") && req->getArg("signup") == "0"))
+                std :: string url = DEFAULT_USERS_URL;
+                url.append("signin");
+                if (req->getScriptName() == url)
                 {
                     std :: string response;
                     bool success = manager.checkUser(login.str(), password.str(), response);
@@ -245,7 +282,10 @@ public:
                     }
                     std :: string message = "Incorrect login or password";
                     sendError(req, stream, message, 401);
-                } else
+                }
+                url = DEFAULT_USERS_URL;
+                url.append("signup");
+                if (req->getScriptName() == url)
                 {
                     std :: string response;
                     bool loginExists = manager.checkLoginExists(login.str());
